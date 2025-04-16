@@ -1,0 +1,1266 @@
+openapi: 3.0.0
+info:
+  title: BOSON
+  version: 1.0.0
+servers:
+  - url: https://boson-api.mooo.com
+  - url: https://ops.waters.co.in
+components:
+  securitySchemes:
+    noauthAuth:
+      type: http
+      scheme: noauth
+    bearerAuth:
+      type: http
+      scheme: bearer
+tags:
+  - name: Auth
+  - name: Project
+  - name: Project > search-task-project
+  - name: Tasks
+  - name: Tasks > DailyUpdates
+  - name: Tasks > SeriveReports
+  - name: Dropdowns
+  - name: Product
+  - name: client
+paths:
+  /api/auth/signup:
+    post:
+      tags:
+        - Auth
+      summary: signUp
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: shereyas(tech)
+                phoneNo:
+                  type: integer
+                  example: '8320863631'
+                role:
+                  type: string
+                  example: Technician
+                email:
+                  type: string
+                  example: shereyas@gmail.com
+                password:
+                  type: string
+                  example: Admin@123
+                profilePicture:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                countryCode: '91'
+                phoneNo: '1234567890'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/auth/verify-otp:
+    post:
+      tags:
+        - Auth
+      summary: verify-otp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                userId: 677fc94971f32d307bf6aec0
+                otpCode: '9999'
+      security:
+        - noauthAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/auth/get-user-profile:
+    get:
+      tags:
+        - Auth
+      summary: get-profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/auth/edit-email:
+    put:
+      tags:
+        - Auth
+      summary: edit-email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                newEmail: gondaliyasanket1@gmail.com
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/auth/edit-phone:
+    put:
+      tags:
+        - Auth
+      summary: edit-phone
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                newPhoneNo: '9979944697'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/projects/search:
+    get:
+      tags:
+        - Project > search-task-project
+      summary: search-tasks-projects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '10'
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          example: createdAt
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+          example: desc
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+          example: s
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/projects:
+    post:
+      tags:
+        - Project
+      summary: create-project
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: TEST-servicereport
+                typeOfSite:
+                  type: string
+                  example: Residential
+                typeOfHandover:
+                  type: string
+                  example: Opex
+                startDate:
+                  type: string
+                  example: '2025-02-01T00:00:00Z'
+                capacity:
+                  type: integer
+                  example: '100'
+                location[address]:
+                  type: string
+                  example: 123 Main Street, Cityville
+                location[pinCode]:
+                  type: integer
+                  example: '380015'
+                location[googleMapLink]:
+                  type: string
+                  example: https://maps.google.com/?q=123+Main+Street+Cityville
+                projectPicture:
+                  type: string
+                  format: binary
+                teamMembers[0][role]:
+                  type: string
+                  example: primaryProjectManager
+                teamMembers[0][user]:
+                  type: string
+                  example: 677fc83471f32d307bf6aebd
+                teamMembers[1][role]:
+                  type: string
+                  example: secondaryProjectManager
+                teamMembers[1][user]:
+                  type: string
+                  example: 677fc83471f32d307bf6aebd
+                clients[0][name]:
+                  type: string
+                  example: balraj ghai
+                clients[0][contactNumber]:
+                  type: integer
+                  example: '1234567890'
+                clients[1][name]:
+                  type: string
+                  example: dipak
+                clients[1][contactNumber]:
+                  type: integer
+                  example: '9797979797'
+                handoverDate:
+                  type: string
+                  example: '2025-12-01T00:00:00Z'
+                product:
+                  type: string
+                  example: 679c71775e6b0b7a28e4cc1b
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Project
+      summary: get-projects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '10'
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          example: createdAt
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+          example: desc
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: product
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/projects/{id}:
+    get:
+      tags:
+        - Project
+      summary: get-project-by-id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b822782ac9500b19c5224b
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    put:
+      tags:
+        - Project
+      summary: update-project
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: TEST 2 Project
+                typeOfSite:
+                  type: string
+                  example: Residential
+                typeOfHandover:
+                  type: string
+                  example: Opex
+                stage:
+                  type: string
+                  example: Set-up
+                startDate:
+                  type: string
+                  example: '2025-01-01T00:00:00Z'
+                capacity:
+                  type: integer
+                  example: '100'
+                location[address]:
+                  type: string
+                  example: 123 Main Street, Cityville
+                location[pinCode]:
+                  type: integer
+                  example: '123456'
+                location[googleMapLink]:
+                  type: string
+                  example: https://maps.google.com/?q=123+Main+Street+Cityville
+                projectPicture:
+                  type: string
+                  format: binary
+                teamMembers[0][role]:
+                  type: string
+                  example: primaryProjectManager
+                teamMembers[0][user]:
+                  type: string
+                  example: 677fbadeaf7a8e6020cf1433
+                teamMembers[1][role]:
+                  type: string
+                  example: secondaryProjectManager
+                teamMembers[1][user]:
+                  type: string
+                  example: 677fc94971f32d307bf6aec0
+                clients[0][name]:
+                  type: string
+                  example: balraj ghai
+                clients[0][contactNumber]:
+                  type: integer
+                  example: '1234567890'
+                clients[1][name]:
+                  type: string
+                  example: dipak23
+                clients[1][contactNumber]:
+                  type: integer
+                  example: '9797979793'
+                handoverDate:
+                  type: string
+                  example: '2025-10-01T00:00:00Z'
+                product:
+                  type: string
+                  example: 6799bbf90052022d7e712a13
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b5896f95bab26762ed4785
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Project
+      summary: delete-project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 679b6635ac29285f48ac4ed5
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/projects/history/{projectId}:
+    get:
+      tags:
+        - Project
+      summary: get-project-history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b829ac2ac9500b19c53230
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/uploadPhotos/{updateId}:
+    post:
+      tags:
+        - Tasks > DailyUpdates
+      summary: upload-task-photos
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photos:
+                  type: string
+                  format: binary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: updateId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b82c9b2ac9500b19c53436
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/deletePhotos/{updateId}:
+    post:
+      tags:
+        - Tasks > DailyUpdates
+      summary: delete-task-photos
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                fileUrls:
+                  type: string
+                  example: >-
+                    https://boson.india.s3.ap-south-1.amazonaws.com/images/1737529180203_Map_render.png
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: updateId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 6780e71a6cda95ccf0b54289
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/updateManHours/{updateId}:
+    patch:
+      tags:
+        - Tasks > DailyUpdates
+      summary: update-man-hours
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                noOfPerson: '3'
+                noOfHours: '5'
+                totalHours: '15'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: updateId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 679b0cfe1922c793e55e78f4
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/updateDistance/{updateId}:
+    patch:
+      tags:
+        - Tasks > DailyUpdates
+      summary: update-distance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                distanceTraveled: '20'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: updateId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 6780e71a6cda95ccf0b54289
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/dailyUpdates/:
+    get:
+      tags:
+        - Tasks > DailyUpdates
+      summary: list-daily-updates
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: query
+          schema:
+            type: string
+          example: 67908a0a1658abd4b804d21d
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/report/{reportId}:
+    get:
+      tags:
+        - Tasks > SeriveReports
+      summary: get-service-report
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b84c8bce7d58267d9941d0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Tasks > SeriveReports
+      summary: add-service-report
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                filledBy: 677fbadeaf7a8e6020cf1433
+                dateOfVisit: dateOfVisit
+                formData:
+                  preRequisiteCheck:
+                    space:
+                      location: Covered area
+                      dimensions:
+                        length: 35 ft
+                        breadth: '324'
+                        height: '234'
+                      civilWorkRequired: 'Yes'
+                      fabricationWorkRequired: 'Yes'
+                      powerSocketNearby: 'Yes'
+                      drainFacilityNearby: 'Yes'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b84c8bce7d58267d9941d0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/create:
+    post:
+      tags:
+        - Tasks
+      summary: create-task
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                projectId: 67b72aa22ac9500b19c4d778
+                projectStage: Installation & Commissioning
+                startDate: '2025-02-11T00:00:00Z'
+                endDate: '2025-03-13T00:00:00Z'
+                name: technician test
+                primaryOwner: 677fc94971f32d307bf6aec0
+                secondaryOwner: 677fc83471f32d307bf6aebd
+                serviceReport:
+                  formId: 67976fa3634ee71dabcd9f09
+                  name: form-4
+                remarks: >-
+                  Customer reported about main filter leaking. Take any
+                  equipment needed for the repair.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/edit/{taskId}:
+    put:
+      tags:
+        - Tasks
+      summary: edit-task
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                primaryOwner: 63e1d1e9c8d9875678abcd34
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b722acdc35e0dc893802fa
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/:
+    get:
+      tags:
+        - Tasks
+      summary: get-task-list
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '10'
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          example: createdAt
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+          example: desc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/count:
+    get:
+      tags:
+        - Tasks
+      summary: get-task-count
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+          example: 679cb42bebe4c5ec8e81edb8
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/list/:
+    get:
+      tags:
+        - Tasks
+      summary: get-project-tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+          example: 67b84c8bce7d58267d9941ba
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/list/calendar:
+    get:
+      tags:
+        - Tasks
+      summary: get-calendar-tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: year
+          in: query
+          schema:
+            type: integer
+          example: '2025'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/list/calendar/day:
+    get:
+      tags:
+        - Tasks
+      summary: list-task-for-date
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+          example: '2025-01-11T00:00:00.000Z'
+        - name: ' sortBy'
+          in: query
+          schema:
+            type: string
+          example: name
+        - name: 'sortOrder '
+          in: query
+          schema:
+            type: string
+          example: asc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: get-task-by-id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b829ac2ac9500b19c53239
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Tasks
+      summary: delete-tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b5a004e1875fd84c9d67ae
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/updateTimeline/{taskId}:
+    patch:
+      tags:
+        - Tasks
+      summary: update-task-timeline
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                taskId: 679cb42bebe4c5ec8e81edc1
+                startDate: '2025-02-11'
+                endDate: '2025-02-15'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 679b4034ade2a746f6c6e803
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/review/{taskId}:
+    put:
+      tags:
+        - Tasks
+      summary: review-submit
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b829ac2ac9500b19c53239
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/resubmit/{taskId}:
+    put:
+      tags:
+        - Tasks
+      summary: resubmit-task
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b829ac2ac9500b19c53239
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/{taskId}/assign:
+    put:
+      tags:
+        - Tasks
+      summary: assign-task
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                primaryOwner: 677fc94971f32d307bf6aec0
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 67b72b062ac9500b19c4e980
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/markAsDone/{taskId}:
+    put:
+      tags:
+        - Tasks
+      summary: mark-as-done
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 679b4034ade2a746f6c6e803
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/schedule:
+    post:
+      tags:
+        - Tasks
+      summary: create-schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                repeat:
+                  frequency: monthly
+                  interval: 1
+                  monthlyOption: nthDay
+                  nthOccurrence: 3
+                  daysOfWeek:
+                    - 4
+                  endCondition:
+                    type: endDate
+                    endDate: '2025-05-01'
+                stage: Maintenance
+                projectId: 67ac3c6e3c1568e3150a9336
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/tasks/schedule/create:
+    post:
+      tags:
+        - Tasks
+      summary: create-task-from-schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                projectId: 67ac3c6e3c1568e3150a9336
+                taskTitle: response check Maintenance
+                taskDates:
+                  - '2025-02-20T18:30:00.000Z'
+                stage: Maintenance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/dropdowns/task-types:
+    get:
+      tags:
+        - Dropdowns
+      summary: task-dropdown
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/dropdowns/product/{projectId}:
+    get:
+      tags:
+        - Dropdowns
+      summary: get-product-by-project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 679080dcf75f093bc9e87ea5
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/dropdowns/projects:
+    get:
+      tags:
+        - Dropdowns
+      summary: project-dorpdown
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/dropdowns/states:
+    get:
+      tags:
+        - Dropdowns
+      summary: states-dorpdown
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/dropdowns/form-types:
+    get:
+      tags:
+        - Dropdowns
+      summary: form-type-dropdown
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/dropdowns/users:
+    get:
+      tags:
+        - Dropdowns
+      summary: users-dropdown
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/dropdowns/products:
+    get:
+      tags:
+        - Dropdowns
+      summary: product-dropdown
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/product/add:
+    post:
+      tags:
+        - Product
+      summary: add
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Sewage Treatment Plant
+                productPicture:
+                  type: string
+                  format: binary
+                descripton:
+                  type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/product/addForm:
+    post:
+      tags:
+        - Product
+      summary: add-form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Form-5
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/product/form/upload:
+    post:
+      tags:
+        - Product
+      summary: upload-form-image
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                formImage:
+                  type: string
+                  format: binary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Product
+      summary: delete-from-image
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/client/{clientId}:
+    delete:
+      tags:
+        - client
+      summary: delete-client
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 677b7a9b04e2cac070132be3
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/client/{clientID}:
+    put:
+      tags:
+        - client
+      summary: update-client
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: farhan
+                contactNumber: '2223334445'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientID
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 677b7a9b04e2cac070132be3
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/client/add/{projectId}:
+    patch:
+      tags:
+        - client
+      summary: add-client
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: badshah
+                contactNumber: '9998889998'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 677b7a9b04e2cac070132be8
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /generate-yml:
+    get:
+      tags:
+        - General
+      summary: generate-swagger
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

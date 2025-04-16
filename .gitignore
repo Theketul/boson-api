@@ -1,0 +1,6 @@
+/node_modules
+postman_collection.json
+BOSON.postman_collection.json
+.github/workflows/webpack.yml
+/scripts
+.env

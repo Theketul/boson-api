@@ -95,7 +95,7 @@ exports.login = async (req, res) => {
     }
 
     if (phoneNo !== TEST_PHONE) {
-      const authToken = user.authToken || await generateToken(countryCode, user.email);
+      const authToken = user.authToken || process.env.MESSAGE_CENTRAL_AUTH_TOKEN || await generateToken(countryCode, user.email);
       const verificationId = await sendOTP(countryCode, authToken, phoneNo);
       
       Object.assign(user, { authToken, verificationId });

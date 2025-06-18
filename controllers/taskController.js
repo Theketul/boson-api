@@ -272,24 +272,30 @@ exports.createTask = async (req, res) => {
 
     await syncProjectTechnicians(project._id);
 
-    // Send notifications to technicians.
-    const primaryTechnician = await User.findById(primaryOwner).select("email phoneNo name");
-    const secondaryTechnician = secondaryOwner && secondaryOwner.trim() !== ""
-      ? await User.findById(secondaryOwner).select("email phoneNo name")
-      : null;
-    if (primaryTechnician?.email) {
-      await sendTaskAssignedEmailToTechnician(primaryTechnician, newTask, project);
+    try {
+      // Send notifications to technicians.
+      const primaryTechnician = await User.findById(primaryOwner).select("email phoneNo name");
+      const secondaryTechnician = secondaryOwner && secondaryOwner.trim() !== ""
+        ? await User.findById(secondaryOwner).select("email phoneNo name")
+        : null;
+      if (primaryTechnician?.email) {
+        await sendTaskAssignedEmailToTechnician(primaryTechnician, newTask, project);
+      }
+      if (primaryTechnician?.phoneNo) {
+        await sendTaskAssignedWhatsAppToTechnician(primaryTechnician, newTask, project);
+      }
+      if (secondaryTechnician?.email) {
+        await sendTaskAssignedEmailToTechnician(secondaryTechnician, newTask, project);
+      }
+      if (secondaryTechnician?.phoneNo) {
+        await sendTaskAssignedWhatsAppToTechnician(secondaryTechnician, newTask, project);
+      }
+    } catch (notificationError) {
+      console.error("Notification error:", {
+        error: notificationError.message,
+        stack: notificationError.stack,
+      });
     }
-    if (primaryTechnician?.phoneNo) {
-      await sendTaskAssignedWhatsAppToTechnician(primaryTechnician, newTask, project);
-    }
-    if (secondaryTechnician?.email) {
-      await sendTaskAssignedEmailToTechnician(secondaryTechnician, newTask, project);
-    }
-    if (secondaryTechnician?.phoneNo) {
-      await sendTaskAssignedWhatsAppToTechnician(secondaryTechnician, newTask, project);
-    }
-
     const populatedTask = await Task.findById(newTask._id).populate("dailyUpdates");
     return res.handler.response(STATUS_CODES.SUCCESS, "Task created successfully", { task: populatedTask });
   } catch (error) {
@@ -430,40 +436,53 @@ exports.editTask = async (req, res) => {
       task.dailyUpdates = allUpdates.map((update) => update._id);
       await task.save();
     }
-
-    // Update project team members with technician assignments.
-    const ownersToAdd = [
-      primaryOwner ? { role: "Technician", user: primaryOwner } : null,
-      secondaryOwner ? { role: "Technician", user: secondaryOwner } : null,
-    ].filter(Boolean);
-    const currentTeamMembers = (project.teamMembers || [])
-      .map((member) => member.user?.toString())
-      .filter(Boolean);
-    ownersToAdd.forEach((owner) => {
-      if (owner && owner.user && !currentTeamMembers.includes(owner.user.toString())) {
-        project.teamMembers.push(owner);
-      }
-    });
-    await project.save();
-
-    // Send notifications if technician assignments changed.
-    if (primaryOwner && primaryOwner !== originalPrimaryOwner) {
-      const primaryTech = await User.findById(primaryOwner).select("email phoneNo name");
-      if (primaryTech?.email) {
-        await sendTaskAssignedEmailToTechnician(primaryTech, task, project);
-      }
-      if (primaryTech?.phoneNo) {
-        await sendTaskAssignedWhatsAppToTechnician(primaryTech, task, project);
-      }
+    try {
+      // Update project team members with technician assignments.
+      const ownersToAdd = [
+        primaryOwner ? { role: "Technician", user: primaryOwner } : null,
+        secondaryOwner ? { role: "Technician", user: secondaryOwner } : null,
+      ].filter(Boolean);
+      const currentTeamMembers = (project.teamMembers || [])
+        .map((member) => member.user?.toString())
+        .filter(Boolean);
+      ownersToAdd.forEach((owner) => {
+        if (owner && owner.user && !currentTeamMembers.includes(owner.user.toString())) {
+          project.teamMembers.push(owner);
+        }
+      });
+      await project.save();
+    } catch (assignmentError) {
+      console.error("task edit assignment error:", {
+        error: assignmentError.message,
+        stack: assignmentError.stack,
+      });
     }
-    if (secondaryOwner && secondaryOwner !== originalSecondaryOwner) {
-      const secondaryTech = await User.findById(secondaryOwner).select("email phoneNo name");
-      if (secondaryTech?.email) {
-        await sendTaskAssignedEmailToTechnician(secondaryTech, task, project);
+
+    try {
+      // Send notifications if technician assignments changed.
+      if (primaryOwner && primaryOwner !== originalPrimaryOwner) {
+        const primaryTech = await User.findById(primaryOwner).select("email phoneNo name");
+        if (primaryTech?.email) {
+          await sendTaskAssignedEmailToTechnician(primaryTech, task, project);
+        }
+        if (primaryTech?.phoneNo) {
+          await sendTaskAssignedWhatsAppToTechnician(primaryTech, task, project);
+        }
       }
-      if (secondaryTech?.phoneNo) {
-        await sendTaskAssignedWhatsAppToTechnician(secondaryTech, task, project);
+      if (secondaryOwner && secondaryOwner !== originalSecondaryOwner) {
+        const secondaryTech = await User.findById(secondaryOwner).select("email phoneNo name");
+        if (secondaryTech?.email) {
+          await sendTaskAssignedEmailToTechnician(secondaryTech, task, project);
+        }
+        if (secondaryTech?.phoneNo) {
+          await sendTaskAssignedWhatsAppToTechnician(secondaryTech, task, project);
+        }
       }
+    } catch (notificationError) {
+      console.error("Task edit notification error:", {
+        error: notificationError.message,
+        stack: notificationError.stack,
+      });
     }
 
     await syncProjectTechnicians(project._id);
@@ -1545,7 +1564,6 @@ exports.submitForReview = async (req, res) => {
           select: "name",
         }
       });
-    console.log("populatedTask", populatedTask);
     if (!populatedTask || !populatedTask.project) {
       return res.handler.response(
         STATUS_CODES.NOT_FOUND,
@@ -1553,20 +1571,26 @@ exports.submitForReview = async (req, res) => {
       );
     }
     const project = populatedTask.project;
+    try {
+      if (populatedTask.primaryOwner?.phoneNo) {
+        await sendTaskSubmittedWhatsAppToPM(populatedTask.primaryOwner, populatedTask, project, req.user);
+      }
+      if (populatedTask.primaryOwner?.email) {
+        await sendTaskSubmittedEmailToPM(populatedTask.primaryOwner, populatedTask, project);
+      }
+      // Notify Secondary Owner
+      if (populatedTask.secondaryOwner?.phoneNo) {
+        await sendTaskSubmittedWhatsAppToPM(populatedTask.secondaryOwner, populatedTask, project, req.user);
+      }
 
-    if (populatedTask.primaryOwner?.phoneNo) {
-      await sendTaskSubmittedWhatsAppToPM(populatedTask.primaryOwner, populatedTask, project, req.user);
-    }
-    if (populatedTask.primaryOwner?.email) {
-      await sendTaskSubmittedEmailToPM(populatedTask.primaryOwner, populatedTask, project);
-    }
-    // Notify Secondary Owner
-    if (populatedTask.secondaryOwner?.phoneNo) {
-      await sendTaskSubmittedWhatsAppToPM(populatedTask.secondaryOwner, populatedTask, project, req.user);
-    }
-
-    if (populatedTask.secondaryOwner?.email) {
-      await sendTaskSubmittedEmailToPM(populatedTask.secondaryOwner, populatedTask, project);
+      if (populatedTask.secondaryOwner?.email) {
+        await sendTaskSubmittedEmailToPM(populatedTask.secondaryOwner, populatedTask, project);
+      }
+    } catch (notificationError) {
+      console.error("submitForReview notification error:", {
+        error: notificationError.message,
+        stack: notificationError.stack,
+      });
     }
 
     return res.handler.response(
@@ -1618,19 +1642,26 @@ exports.resubmitTask = async (req, res) => {
 
     const resubmittedBy = req.user; // Storing user info for reuse
 
-    if (updatedTask.primaryOwner?.email) {
-      await sendTaskResubmittedEmailToTechnician(updatedTask.primaryOwner, updatedTask, resubmittedBy.name);
-    }
-    if (updatedTask.primaryOwner?.phoneNo) {
-      await sendTaskResubmittedWhatsAppToTechnician(updatedTask.primaryOwner, updatedTask, resubmittedBy);
-    }
+    try {
+      if (updatedTask.primaryOwner?.email) {
+        await sendTaskResubmittedEmailToTechnician(updatedTask.primaryOwner, updatedTask, resubmittedBy.name);
+      }
+      if (updatedTask.primaryOwner?.phoneNo) {
+        await sendTaskResubmittedWhatsAppToTechnician(updatedTask.primaryOwner, updatedTask, resubmittedBy);
+      }
 
-    // Notify Secondary Owner
-    if (updatedTask.secondaryOwner?.email) {
-      await sendTaskResubmittedEmailToTechnician(updatedTask.secondaryOwner, updatedTask, resubmittedBy.name);
-    }
-    if (updatedTask.secondaryOwner?.phoneNo) {
-      await sendTaskResubmittedWhatsAppToTechnician(updatedTask.secondaryOwner, updatedTask, resubmittedBy);
+      // Notify Secondary Owner
+      if (updatedTask.secondaryOwner?.email) {
+        await sendTaskResubmittedEmailToTechnician(updatedTask.secondaryOwner, updatedTask, resubmittedBy.name);
+      }
+      if (updatedTask.secondaryOwner?.phoneNo) {
+        await sendTaskResubmittedWhatsAppToTechnician(updatedTask.secondaryOwner, updatedTask, resubmittedBy);
+      }
+    } catch (notificationError) {
+      console.error("Notification error:", {
+        error: notificationError.message,
+        stack: notificationError.stack,
+      });
     }
 
     return res.handler.response(STATUS_CODES.SUCCESS, "Task resubmitted successfully", updatedTask);

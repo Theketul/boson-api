@@ -455,7 +455,12 @@ exports.updateProject = async (req, res) => {
       }
 
       if (req.user.role === "ProjectManager") {
-        if (req.body.startDate || req.body.endDate) {
+        const isStartDateChanging =
+          req.body.startDate && req.body.startDate !== originalProject.startDate?.toISOString();
+        const isEndDateChanging =
+          req.body.endDate && req.body.endDate !== originalProject.endDate?.toISOString();
+
+        if (isStartDateChanging || isEndDateChanging) {
           throw new ValidationError(
             "Project Managers are not allowed to edit start date or end date"
           );

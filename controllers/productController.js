@@ -1,5 +1,6 @@
 const Product = require("../models/productModel");
 const Form = require("../models/formModel");
+const ProductTaskMapping = require("../models/productTaskMappingModel");
 const MongoUtils = require("../utils/mongo-utils");
 const { deleteFileFromS3 } = require("../utils/awsbucket");
 
@@ -9,6 +10,12 @@ const validateProduct = (name, file) => {
   if (!file) errors.push("Product image is required");
   return errors;
 };
+
+const DEFAULT_STAGES = [
+  { name: "Pre-requisites", tasks: [] },
+  { name: "Installation & Commissioning", tasks: [] },
+  { name: "Maintenance", tasks: [] },
+];
 
 exports.addProduct = async (req, res) => {
   const { name, description } = req.body;
@@ -38,12 +45,28 @@ exports.addProduct = async (req, res) => {
       description: description?.trim()
     });
 
+    // Ensure a ProductTaskMapping exists for this product with default stages
+    const existingMapping = await ProductTaskMapping.findOne({ product: newProduct._id });
+    if (!existingMapping) {
+      await ProductTaskMapping.create({
+        product: newProduct._id,
+        stages: DEFAULT_STAGES,
+      });
+    }
+
     return res.handler.response(
       STATUS_CODES.CREATED,
       "Product added successfully",
       newProduct
     );
   } catch (error) {
+    // Best-effort cleanup if product was created but mapping failed
+    try {
+      const created = await MongoUtils.findOneByField(Product, 'name', name?.trim());
+      if (created) {
+        await Product.deleteOne({ _id: created._id });
+      }
+    } catch (_) {}
     if (file?.location) {
       await deleteFileFromS3(file.location);
     }

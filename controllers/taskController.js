@@ -22,7 +22,7 @@ const {
 } = require("../utils/functions");
 const moment = require("moment");
 const { deleteFileFromS3 } = require("../utils/awsbucket");
-const { sendTaskAssignedWhatsAppToTechnician, sendTaskSubmittedWhatsAppToPM, sendTaskResubmittedWhatsAppToTechnician } = require("../utils/whatsappService");
+const { sendTaskAssignedWhatsAppToTechnician, sendTaskSubmittedWhatsAppToPM, sendTaskResubmittedWhatsAppToTechnician } = require("../services/whatsappNotificationService");
 
 const updateDailyUpdates = async (task) => {
   try {
@@ -324,6 +324,7 @@ exports.editTask = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(taskId)) {
       return res.handler.response(STATUS_CODES.BAD_REQUEST, "Invalid task ID");
     }
+
 
     const task = await Task.findById(taskId).populate({
       path: "project",

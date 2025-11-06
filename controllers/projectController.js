@@ -307,6 +307,7 @@ exports.getAllProjects = async (req, res) => {
       status,
       state,
       product,
+      typeOfSite,
     } = req.query;
 
     const filter = {};
@@ -314,6 +315,7 @@ exports.getAllProjects = async (req, res) => {
     if (status) filter.status = status;
     if (state) filter["location.state"] = state;
     if (product) filter.product = product;
+     if (typeOfSite) filter.typeOfSite = typeOfSite;
 
     // if (req.user.role === "ProjectManager") {
     //   filter["$or"] = [

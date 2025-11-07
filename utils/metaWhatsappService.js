@@ -56,115 +56,68 @@ function normalizeIndianPhoneNumber(phoneNumber) {
 // Template configurations mapping
 const TEMPLATE_CONFIG = {
   task_delayed: {
-    header: "Task Delayed Notification",
-    body: "The following task is delayed by *{{1}}* days.  \n\n*Task*: {{2}}  \n*Project*: {{3}}  \n*Product*: {{4}}  \n*Primary Owner*: {{5}}  \n*Secondary Owner*: {{6}}  \n*Timeline*: {{7}} *to* {{8}}  \n\nPlease make sure the task is updated as soon as possible.",
-    footer: 'Type "STOP" to unsubscribe',
-    buttonText: "View Task",
-    urlPattern: "https://ops.waters.co.in/task-detail/{{1}}",
+    language: "en",
     hasButton: true,
   },
   project_assignment_project_manager: {
-    header: "Project Assignment",
-    body: "You are assigned ownership of a new project: *{{1}}* by *{{2}}*.\n\nYou can start planning",
-    footer: 'Type "STOP" to unsubscribe',
-    buttonText: "View Project",
-    urlPattern: "https://ops.waters.co.in/project-detail/{{1}}",
+    language: "en",
     hasButton: true,
   },
   task_assignment_tech: {
-    header: "New Task Assigned",
-    body: "*Task Assignment Alert!*\n\n*Task:* {{1}}\n*Project:* {{2}}\n\nPlease make sure to upload daily updates and complete it within the deadline .",
-    footer: 'Type "STOP" to unsubscribe',
-    buttonText: "View Task",
-    urlPattern: "https://ops.waters.co.in/task-detail/{{1}}",
+    language: "en",
     hasButton: true,
   },
   task_resubmission_project_manager: {
-    header: "Task Resubmitted",
-    body: "*Task Resubmitted!*  \n\n*Resubmitted by:* {{1}}  \n*Task:* {{2}}  \n*Project:* {{3}}  \n*Product:* {{4}}  \n\nPlease connect with your Project Manager and update the task accordingly.",
-    footer: 'Type "STOP" to unsubscribe',
-    buttonText: "View Task",
-    urlPattern: "https://ops.waters.co.in/task-detail/{{1}}",
+    language: "en",
     hasButton: true,
   },
   task_submission_project_manager: {
-    header: "Task Submitted for Review",
-    body: "*Submitted by:* {{1}}  \n*Task:* {{2}}  \n*Project:* {{3}}  \n*Product:* {{4}}  \n*Submitted on:* {{5}}  \n\nPlease review the task and ensure all updates are uploaded.  \nComplete it within the deadline.",
-    footer: 'Type "STOP" to unsubscribe',
-    buttonText: "View Task",
-    urlPattern: "https://ops.waters.co.in/task-detail/{{1}}",
+    language: "en",
     hasButton: true,
-  }
+  },
 };
 
 /**
- * Replace placeholders in template text with actual values
+ * Build template components (body parameters and optional CTA button)
  */
-function replacePlaceholders(text, params) {
-  let result = text;
-  params.forEach((param, index) => {
-    const placeholder = `{{${index + 1}}}`;
-    // Escape curly braces for regex and replace globally
-    const escapedPlaceholder = placeholder.replace(/[{}]/g, '\\$&');
-    result = result.replace(new RegExp(escapedPlaceholder, "g"), String(param || ""));
-  });
-  return result;
-}
-
-/**
- * Build interactive message payload
- */
-function buildInteractivePayload(
-  to,
-  templateName,
-  bodyParams = [],
-  ctaParam = null
-) {
+function buildTemplateComponents(templateName, bodyParams = [], ctaParam = null) {
   const config = TEMPLATE_CONFIG[templateName];
 
   if (!config) {
     throw new Error(`Template configuration not found for: ${templateName}`);
   }
 
-  // Replace placeholders in body text
-  const bodyText = replacePlaceholders(config.body, bodyParams);
+  const components = [];
 
-  // Build the payload
-  const payload = {
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to: to,
-    type: "interactive",
-    interactive: {
-      type: "cta_url",
-      header: {
+  if (bodyParams.length > 0) {
+    components.push({
+      type: "body",
+      parameters: bodyParams.map((param) => ({
         type: "text",
-        text: config.header,
-      },
-      body: {
-        text: bodyText,
-      },
-      footer: {
-        text: config.footer,
-      },
-    },
-  };
-
-  // Add button if template has one and ctaParam is provided
-  if (config.hasButton && ctaParam) {
-    // Replace {{1}} in URL pattern with the actual ID
-    const url = config.urlPattern.replace("{{1}}", ctaParam);
-
-    payload.interactive.action = {
-      name: "cta_url",
-      parameters: {
-        display_text: config.buttonText,
-        url: url,
-      },
-    };
+        text: String(param ?? ""),
+      })),
+    });
   }
 
-  return payload;
+  if (config.hasButton) {
+    if (!ctaParam) {
+      throw new Error(`CTA parameter is required for template ${templateName}`);
+    }
+
+    components.push({
+      type: "button",
+      sub_type: "url",
+      index: "0",
+      parameters: [
+        {
+          type: "text",
+          text: String(ctaParam),
+        },
+      ],
+    });
+  }
+
+  return components;
 }
 
 exports.sendWhatsAppTemplate = async (
@@ -174,13 +127,30 @@ exports.sendWhatsAppTemplate = async (
   ctaParam = null
 ) => {
   try {
+    console.log(">" .repeat(50));
     // Normalize phone number to include Indian country code (91)
     const normalizedPhone = normalizeIndianPhoneNumber(to);
-    console.log(`📱 Original: ${to} → Normalized: ${normalizedPhone}`);
-    
-    // Build interactive message payload with normalized phone number
-    const payload = buildInteractivePayload(normalizedPhone, templateName, bodyParams, ctaParam);
-    
+    const config = TEMPLATE_CONFIG[templateName];
+
+    if (!config) {
+      throw new Error(`Template configuration not found for: ${templateName}`);
+    }
+
+    const components = buildTemplateComponents(templateName, bodyParams, ctaParam);
+
+    const payload = {
+      messaging_product: "whatsapp",
+      to: normalizedPhone,
+      type: "template",
+      template: {
+        name: templateName,
+        language: { code: config.language || "en" },
+        ...(components.length > 0 ? { components } : {}),
+      },
+    };
+  console.log("=" .repeat(50));
+
+    console.log("payload", JSON.stringify(payload, null, 2));
     const response = await axios.post(
       `${WHATSAPP_API_URL}/${PHONE_NUMBER_ID}/messages`,
       payload,

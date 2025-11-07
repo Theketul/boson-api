@@ -426,7 +426,6 @@ exports.getProjectById = async (req, res) => {
 
 exports.updateProject = async (req, res) => {
   const fileUrl = req.file?.location;
-  console.log("dfkjsha");
   try {
     if (!Object.keys(req.body).length && !req.file) {
       return res.handler.response(STATUS_CODES.BAD_REQUEST, "No data provided");

@@ -1,5 +1,6 @@
+const path = require("path");
 const axios = require("axios");
-require("dotenv").config();
+require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 
 const WHATSAPP_API_URL = "https://graph.facebook.com/v24.0";
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -127,7 +128,6 @@ exports.sendWhatsAppTemplate = async (
   ctaParam = null
 ) => {
   try {
-    console.log(">" .repeat(50));
     // Normalize phone number to include Indian country code (91)
     const normalizedPhone = normalizeIndianPhoneNumber(to);
     const config = TEMPLATE_CONFIG[templateName];
@@ -148,9 +148,9 @@ exports.sendWhatsAppTemplate = async (
         ...(components.length > 0 ? { components } : {}),
       },
     };
-  console.log("=" .repeat(50));
 
-    console.log("payload", JSON.stringify(payload, null, 2));
+    console.log(ACCESS_TOKEN);
+    console.log(PHONE_NUMBER_ID);
     const response = await axios.post(
       `${WHATSAPP_API_URL}/${PHONE_NUMBER_ID}/messages`,
       payload,

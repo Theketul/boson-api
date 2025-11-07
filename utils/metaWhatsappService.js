@@ -5,6 +5,54 @@ const WHATSAPP_API_URL = "https://graph.facebook.com/v24.0";
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const ACCESS_TOKEN = process.env.WHATSAPP_PERMANENT_ACCESS_TOKEN;
 
+/**
+ * Normalize Indian phone number to include country code 91
+ * Validates and formats Indian phone numbers
+ * @param {string} phoneNumber - Phone number (with or without country code)
+ * @returns {string} - Normalized phone number with country code (91XXXXXXXXXX)
+ */
+function normalizeIndianPhoneNumber(phoneNumber) {
+  if (!phoneNumber) {
+    throw new Error("Phone number is required");
+  }
+
+  // Remove all non-digit characters
+  let cleaned = phoneNumber.toString().replace(/\D/g, "");
+
+  // Remove leading zeros if present
+  cleaned = cleaned.replace(/^0+/, "");
+
+  // Check if it already starts with 91 (India country code)
+  if (cleaned.startsWith("91")) {
+    // Remove the country code to check the actual number
+    const numberWithoutCountryCode = cleaned.substring(2);
+    
+    // Indian mobile numbers are 10 digits (after removing country code)
+    if (numberWithoutCountryCode.length === 10) {
+      // Validate it's a valid Indian mobile number (starts with 6-9)
+      if (/^[6-9]/.test(numberWithoutCountryCode)) {
+        return cleaned; // Already has country code and is valid
+      } else {
+        throw new Error(`Invalid Indian mobile number: ${phoneNumber}. Must start with 6, 7, 8, or 9`);
+      }
+    } else {
+      throw new Error(`Invalid Indian phone number length: ${phoneNumber}. Expected 10 digits after country code`);
+    }
+  } else {
+    // No country code, check if it's a valid 10-digit Indian number
+    if (cleaned.length === 10) {
+      // Validate it's a valid Indian mobile number (starts with 6-9)
+      if (/^[6-9]/.test(cleaned)) {
+        return "91" + cleaned; // Add country code
+      } else {
+        throw new Error(`Invalid Indian mobile number: ${phoneNumber}. Must start with 6, 7, 8, or 9`);
+      }
+    } else {
+      throw new Error(`Invalid Indian phone number length: ${phoneNumber}. Expected 10 digits`);
+    }
+  }
+}
+
 // Template configurations mapping
 const TEMPLATE_CONFIG = {
   task_delayed: {
@@ -126,9 +174,13 @@ exports.sendWhatsAppTemplate = async (
   ctaParam = null
 ) => {
   try {
-    console.log("to", to);
-    // Build interactive message payload
-    const payload = buildInteractivePayload(to, templateName, bodyParams, ctaParam);
+    // Normalize phone number to include Indian country code (91)
+    const normalizedPhone = normalizeIndianPhoneNumber(to);
+    console.log(`📱 Original: ${to} → Normalized: ${normalizedPhone}`);
+    
+    // Build interactive message payload with normalized phone number
+    const payload = buildInteractivePayload(normalizedPhone, templateName, bodyParams, ctaParam);
+    
     const response = await axios.post(
       `${WHATSAPP_API_URL}/${PHONE_NUMBER_ID}/messages`,
       payload,

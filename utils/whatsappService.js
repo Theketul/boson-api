@@ -81,7 +81,7 @@ async function sendWhatsAppMessage(phoneNumber, templateName, variables, ctaVari
 
 // Notify PM of Project Assignment
 exports.sendProjectAssignedWhatsApp = async (manager, project, assignedBy) => {
-  const projectUrl = `https://boson-app.vercel.app/project-detail/${project._id}`;
+  const projectUrl = `https://ops.waters.co.in/project-detail/${project._id}`;
   console.log(projectUrl);
   return await sendWhatsAppMessage(
     manager.phoneNo,

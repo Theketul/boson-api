@@ -58,6 +58,7 @@ const getDelayedTasksData = async () => {
             projectName: project.name,
             productName: project.product?.name || "N/A",
             taskName: name,
+            taskId: task._id.toString(), // Add task ID for WhatsApp button URL
             delayDays,
             timeline: `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`,
             startDate: new Date(startDate),

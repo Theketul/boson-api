@@ -18,7 +18,7 @@ const {
   sendNewProjectEmailToAdmin,
   sendProjectDeletedEmail,
 } = require("../utils/emailService");
-const { sendNewProjectWhatsAppToAdmin, sendProjectAssignedWhatsApp, sendProjectDeletedWhatsApp } = require("../utils/whatsappService");
+const { sendNewProjectWhatsAppToAdmin, sendProjectAssignedWhatsApp, sendProjectDeletedWhatsApp } = require("../services/whatsappNotificationService");
 
 const DEFAULT_STAGES = [
   { name: "Pre-requisites", tasks: [] },
@@ -266,6 +266,7 @@ exports.createProject = async (req, res) => {
         }
         if (primaryPMUser?.phoneNo) {
           await sendProjectAssignedWhatsApp(primaryPMUser, newProject, req.user.name);
+          
         }
       }
 
@@ -427,7 +428,6 @@ exports.getProjectById = async (req, res) => {
 
 exports.updateProject = async (req, res) => {
   const fileUrl = req.file?.location;
-
   try {
     if (!Object.keys(req.body).length && !req.file) {
       return res.handler.response(STATUS_CODES.BAD_REQUEST, "No data provided");

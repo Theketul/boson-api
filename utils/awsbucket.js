@@ -11,11 +11,32 @@ const S3_CONFIG = {
         VIDEOS: 'videos' // New folder for videos
     },
     MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB limit for videos
-    ALLOWED_MIME_TYPES: {
-        IMAGES: ['image/jpeg', 'image/png', 'image/gif'],
-        DOCS: ['application/pdf', 'application/msword'],
-        VIDEOS: ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-ms-wmv'] // Video formats
-    }
+    ALLOWED_MIME_TYPES : {
+        IMAGES: [
+          'image/jpeg',   // .jpg, .jpeg
+          'image/png',    // .png
+          'image/webp',   // .webp (modern, good compression)
+          'image/svg+xml' // .svg (logos/icons)
+        ],
+      
+        DOCS: [
+          'application/pdf', // .pdf
+          'application/msword', // .doc
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+          'application/vnd.ms-excel', // .xls
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+          'text/plain', // .txt
+          'text/csv' // .csv
+        ],
+      
+        VIDEOS: [
+          'video/mp4',    // .mp4
+          'video/mpeg',   // .mpeg
+          'video/quicktime', // .mov
+          'video/webm'    // .webm (modern browsers)
+        ]
+      },
+      
 };
 
 const s3Client = new S3Client({

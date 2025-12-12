@@ -178,29 +178,33 @@ const determineTaskStatus = (startDate, endDate) => {
 };
 
 const updateTaskStatusAndSave = async (task) => {
-  const currentDate = new Date();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+  const startDate = new Date(task.startDate);
+  const endDate = new Date(task.endDate);
+
+  const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+  // Keep original logic for these statuses
   if (task.status === "To-review" || task.status === "Completed") {
-    return task; // Return the task without making changes
+    return task;
   }
 
-  if (new Date(task.startDate) > currentDate) {
+  if (startDay > today) {
     task.status = "To-do";
-  } else if (
-    new Date(task.startDate) <= currentDate &&
-    new Date(task.endDate) >= currentDate
-  ) {
+  } else if (startDay <= today && endDay >= today) {
     task.status = "On-going";
-  } else if (
-    new Date(task.endDate) < currentDate &&
-    task.status !== "Completed"
-  ) {
+  } else if (today > endDay) {  
+    // Delayed only AFTER the full end date day has passed
     task.status = "Delayed";
   }
-
+console.log(`Updating task ${task._id} status to ${task.status}`);
   await task.save();
   return task;
 };
+
 
 const calculateTaskDates = (repeat, startDate) => {
   const { frequency, interval, daysOfWeek, endCondition, monthlyOption } =

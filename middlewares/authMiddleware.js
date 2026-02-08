@@ -20,9 +20,17 @@ exports.protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.userId).select('-password');
+    // Check for deleted users explicitly by bypassing the middleware
+    req.user = await User.findOne({ _id: decoded.userId, isDeleted: { $ne: true } }).select('-password');
     if (!req.user) {
       return res.handler.response(STATUS_CODES.NOT_FOUND, "User not found");
+    }
+
+    // Check if user is soft-deleted
+    if (req.user.isDeleted) {
+      return res.handler.response(
+        STATUS_CODES.FORBIDDEN, "This account has been deactivated. Please contact administrator."
+      );
     }
 
     next();

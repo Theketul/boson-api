@@ -654,8 +654,16 @@ exports.listTasks = async (req, res) => {
           select: "name productPicture",
         },
       })
-      .populate("primaryOwner", "name profilePicture")
-      .populate("secondaryOwner", "name profilePicture");
+      .populate({
+        path: "primaryOwner",
+        select: "name profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
+      .populate({
+        path: "secondaryOwner",
+        select: "name profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      });
 
     if (!tasks.length) {
       return res.handler.response(STATUS_CODES.SUCCESS, "No tasks found", {
@@ -797,8 +805,16 @@ exports.listTasksByProjectStage = async (req, res) => {
       limit: parseInt(limit, 10),
       sort: { [sortField]: sortOrder === "asc" ? 1 : -1 },
       populate: [
-        { path: "primaryOwner", select: "name profilePicture" },
-        { path: "secondaryOwner", select: "name profilePicture" },
+        { 
+          path: "primaryOwner", 
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        },
+        { 
+          path: "secondaryOwner", 
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        },
         {
           path: "project",
           select: "name location product",
@@ -1010,14 +1026,34 @@ exports.getTaskById = async (req, res) => {
 
   try {
     const task = await Task.findById(taskId)
-      .populate("primaryOwner", "name profilePicture")
-      .populate("secondaryOwner", "name profilePicture")
-      .populate("serviceReport", "formName formId updatedBy data updatedAt")
+      .populate({
+        path: "primaryOwner",
+        select: "name profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
+      .populate({
+        path: "secondaryOwner",
+        select: "name profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
+      .populate({
+        path: "serviceReport",
+        select: "formName formId updatedBy data updatedAt",
+        populate: {
+          path: "updatedBy",
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        }
+      })
       .populate(
         "dailyUpdates",
         "manHours.totalHours date photos distanceTraveled"
       )
-      .populate("updatedBy", "name")
+      .populate({
+        path: "updatedBy",
+        select: "name",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
       .lean();
 
     if (!task) {
@@ -1029,6 +1065,7 @@ exports.getTaskById = async (req, res) => {
       .populate({
         path: "teamMembers.user", // Populate the 'user' field
         select: "name email profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
       })
       .populate("product", "name productPicture")
       .lean();
@@ -1555,8 +1592,16 @@ exports.submitForReview = async (req, res) => {
 
     // Fetch the task with its associated project and project managers
     const populatedTask = await Task.findById(taskId)
-      .populate("primaryOwner", "email phoneNo name")
-      .populate("secondaryOwner", "email phoneNo name")
+      .populate({
+        path: "primaryOwner",
+        select: "email phoneNo name",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
+      .populate({
+        path: "secondaryOwner",
+        select: "email phoneNo name",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
       .populate({
         path: "project",
         select: "name teamMembers",
@@ -1633,8 +1678,16 @@ exports.resubmitTask = async (req, res) => {
     await task.save();
 
     const updatedTask = await Task.findById(taskId)
-      .populate("primaryOwner", "email phoneNo name")
-      .populate("secondaryOwner", "email phoneNo name")
+      .populate({
+        path: "primaryOwner",
+        select: "email phoneNo name",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
+      .populate({
+        path: "secondaryOwner",
+        select: "email phoneNo name",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
       .populate({
         path: "project",
         select: "name product",
@@ -1891,8 +1944,16 @@ exports.createScheduledTasks = async (req, res) => {
           select: "name productPicture",
         },
       })
-      .populate("primaryOwner", "name profilePicture")
-      .populate("secondaryOwner", "name profilePicture");
+      .populate({
+        path: "primaryOwner",
+        select: "name profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
+      .populate({
+        path: "secondaryOwner",
+        select: "name profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      });
 
     return res.handler.response(
       STATUS_CODES.SUCCESS,

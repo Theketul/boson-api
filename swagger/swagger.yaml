@@ -29,6 +29,8 @@ paths:
       tags:
         - Auth
       summary: signUp
+      security:
+        - noauthAuth: []
       requestBody:
         content:
           multipart/form-data:

@@ -10,7 +10,8 @@
     "server": "nodemon server.js",
     "build:dev": "webpack --mode development",
     "build:prod": "webpack --mode production",
-    "start": "node server.js"
+    "start": "node server.js",
+    "manage-users": "node scripts/manageUsers.js"
   },
   "author": "sdd",
   "license": "ISC",

@@ -3,11 +3,22 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateToken, sendOTP, validateOTP } = require("../utils/msgcentral");
 const MongoUtils = require("../utils/mongo-utils");
+const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const JWT_EXPIRY = "100d";
 const SALT_ROUNDS = 12;
 const TEST_PHONE = "1234567890";
 const TEST_OTP = "9999";
+const BYPASS_OTP = process.env.BYPASS_OTP === 'true' || process.env.NODE_ENV === 'development';
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  },
+  forcePathStyle: true
+});
 
 const createAuthToken = (userId, role) => jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRY });
 
@@ -37,9 +48,10 @@ exports.signup = async (req, res) => {
       );
     }
 
-    const existingUser = await MongoUtils.findOneByFields(User, [{ phoneNo }]);
+    // Check for existing user (including soft-deleted) by bypassing middleware
+    const existingUser = await User.findOne({ phoneNo });
 
-    if (existingUser) {
+    if (existingUser && !existingUser.isDeleted) {
       return res.handler.response(
         STATUS_CODES.BAD_REQUEST,
         "User with this phone number already exists."
@@ -47,8 +59,9 @@ exports.signup = async (req, res) => {
     }
 
     if (email) {
-      const existingEmailUser = await MongoUtils.findOneByFields(User, [{ email: email.toLowerCase() }]);
-      if (existingEmailUser) {
+      // Check for existing email (including soft-deleted) by bypassing middleware
+      const existingEmailUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingEmailUser && !existingEmailUser.isDeleted) {
         return res.handler.response(
           STATUS_CODES.BAD_REQUEST,
           "User with this email already exists."
@@ -86,7 +99,8 @@ exports.login = async (req, res) => {
   const { countryCode, phoneNo } = req.body;
   
   try {
-    const user = await MongoUtils.findOneByField(User, 'phoneNo', phoneNo);
+    // Check for deleted users explicitly by bypassing the middleware
+    const user = await User.findOne({ phoneNo, isDeleted: { $ne: true } });
     if (!user) {
       return res.handler.response(
         STATUS_CODES.NOT_FOUND,
@@ -94,7 +108,16 @@ exports.login = async (req, res) => {
       );
     }
 
-    if (phoneNo !== TEST_PHONE) {
+    // Check if user is soft-deleted
+    if (user.isDeleted) {
+      return res.handler.response(
+        STATUS_CODES.FORBIDDEN,
+        "This account has been deactivated. Please contact administrator."
+      );
+    }
+
+    // Skip OTP sending if bypass is enabled or test phone
+    if (!BYPASS_OTP && phoneNo !== TEST_PHONE) {
       const authToken = user.authToken || process.env.MESSAGE_CENTRAL_AUTH_TOKEN || await generateToken(countryCode, user.email);
       const verificationId = await sendOTP(countryCode, authToken, phoneNo);
       
@@ -120,7 +143,8 @@ exports.verifyOTP = async (req, res) => {
   const { userId, otpCode } = req.body;
 
   try {
-    const user = await MongoUtils.findByIdWithSelect(User, userId);
+    // Check for deleted users explicitly by bypassing the middleware
+    const user = await User.findOne({ _id: userId, isDeleted: { $ne: true } });
     if (!user) {
       return res.handler.response(
         STATUS_CODES.NOT_FOUND,
@@ -128,7 +152,16 @@ exports.verifyOTP = async (req, res) => {
       );
     }
 
-    if (otpCode !== TEST_OTP) {
+    // Check if user is soft-deleted
+    if (user.isDeleted) {
+      return res.handler.response(
+        STATUS_CODES.FORBIDDEN,
+        "This account has been deactivated. Please contact administrator."
+      );
+    }
+
+    // Skip OTP validation if bypass is enabled
+    if (!BYPASS_OTP && otpCode !== TEST_OTP) {
       const otpValidationResult = await validateOTP(
         user.authToken,
         user.verificationId,

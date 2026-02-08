@@ -247,7 +247,11 @@ exports.createProject = async (req, res) => {
         .populate("product", "name productPicture")
         .populate("clients", "name contactNumber")
         .populate("stages.tasks", "name status serviceReport")
-        .populate({ path: "teamMembers.user", select: "name profilePicture" })
+        .populate({ 
+          path: "teamMembers.user", 
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        })
         .lean();
 
       const admins = await User.find({ role: "Admin" }).select("email phoneNo").lean();
@@ -354,6 +358,7 @@ exports.getAllProjects = async (req, res) => {
         {
           path: "teamMembers.user",
           select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
         },
         { path: "product", select: "name productPicture" },
       ],
@@ -397,6 +402,7 @@ exports.getProjectById = async (req, res) => {
       .populate({
         path: "teamMembers.user", // Populate the 'user' field
         select: "name email profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
       })
       .populate({
         path: "stages.tasks",
@@ -617,9 +623,21 @@ exports.getProjectHistory = async (req, res) => {
 
     const tasks = await Task.find({ project: projectId })
       .select("name primaryOwner dailyUpdates serviceReport")
-      .populate("primaryOwner", "name profilePicture")
+      .populate({
+        path: "primaryOwner",
+        select: "name profilePicture",
+        match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+      })
       .populate("dailyUpdates", "date photos manHours distanceTraveled")
-      .populate("serviceReport", "formId formName data updatedBy updatedAt createdAt")
+      .populate({
+        path: "serviceReport",
+        select: "formId formName data updatedBy updatedAt createdAt",
+        populate: {
+          path: "updatedBy",
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        }
+      })
       .lean();
 
     if (!tasks.length) {
@@ -755,8 +773,16 @@ exports.searchTasksAndProjects = async (req, res) => {
             select: "name productPicture",
           },
         })
-        .populate({ path: "primaryOwner", select: "name profilePicture" })
-        .populate({ path: "secondaryOwner", select: "name profilePicture" })
+        .populate({ 
+          path: "primaryOwner", 
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        })
+        .populate({ 
+          path: "secondaryOwner", 
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        })
         .lean();
 
       return res.status(200).json({
@@ -813,8 +839,16 @@ exports.searchTasksAndProjects = async (req, res) => {
             select: "name productPicture",
           },
         })
-        .populate({ path: "primaryOwner", select: "name profilePicture" })
-        .populate({ path: "secondaryOwner", select: "name profilePicture" })
+        .populate({ 
+          path: "primaryOwner", 
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        })
+        .populate({ 
+          path: "secondaryOwner", 
+          select: "name profilePicture",
+          match: { $or: [{ isDeleted: true }, { isDeleted: false }, { isDeleted: { $exists: false } }] } // Include deleted users for historical data
+        })
         .lean()
     ]);
 

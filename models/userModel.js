@@ -58,10 +58,29 @@ const userSchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Query middleware to exclude soft-deleted users by default
+userSchema.pre(/^find/, function(next) {
+  const query = this.getQuery();
+  // Only exclude deleted users if isDeleted is not explicitly set in the query
+  // Also check if $or is used (which might include isDeleted conditions for historical data)
+  if (query.isDeleted === undefined && !query.$or) {
+    this.where({ isDeleted: { $ne: true } });
+  }
+  next();
+});
 
 module.exports = mongoose.model("User", userSchema);
